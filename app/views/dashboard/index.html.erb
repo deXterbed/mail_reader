@@ -1,0 +1,34 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <span class="status-tag status-success">Authenticated</span>
+  </div>
+
+  <% if flash[:alert] %>
+    <div class="flash flash-alert"><%= flash[:alert] %></div>
+  <% elsif flash[:notice] %>
+    <div class="flash flash-notice"><%= flash[:notice] %></div>
+  <% end %>
+
+  <% if @emails.present? %>
+    <h2>Latest Emails</h2>
+    <ul class="email-list">
+      <% @emails.each do |email| %>
+        <li class="email-card">
+          <div class="email-meta">
+            <strong>Subject:</strong> <%= email[:subject] %>
+          </div>
+          <div class="email-meta">
+            <span><strong>From:</strong> <%= email[:from] %></span>
+            <span><strong>Received:</strong> <%= email[:received_at] %></span>
+          </div>
+          <p class="email-snippet"><%= email[:snippet] %></p>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="empty-state">
+      <p>No emails to display yet.</p>
+    </div>
+  <% end %>
+</div>
