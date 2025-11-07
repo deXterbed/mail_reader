@@ -1,5 +1,6 @@
 require 'google/apis/gmail_v1'
 require 'googleauth'
+require 'time'
 
 class DashboardController < ApplicationController
   def index
@@ -12,8 +13,14 @@ class DashboardController < ApplicationController
     ensure_token_freshness(token)
     service = build_gmail_service(token)
 
-    @emails = Rails.cache.fetch(cache_key_for_emails, expires_in: 5.minutes) do
-      fetch_latest_emails(service)
+    cache_key = cache_key_for_emails
+    cached_emails = Rails.cache.read(cache_key)
+
+    if !cached_emails.nil? && !new_messages_since_last_check?(service, token)
+      @emails = cached_emails
+    else
+      @emails = fetch_latest_emails(service, token)
+      Rails.cache.write(cache_key, @emails, expires_in: 5.minutes)
     end
   rescue Google::Apis::AuthorizationError
     redirect_to login_path, alert: 'Your session has expired. Please sign in again.'
@@ -59,11 +66,17 @@ class DashboardController < ApplicationController
     headers.find { |h| h.name == name }&.value || 'Unknown'
   end
 
-  def fetch_latest_emails(service)
+  def fetch_latest_emails(service, token)
     response = service.list_user_messages('me', max_results: 10)
-    return [] unless response.messages.present?
+    unless response.messages.present?
+      profile = service.get_user_profile('me')
+      if token && profile&.history_id
+        token.update(history_id: profile.history_id)
+      end
+      return []
+    end
 
-    response.messages.map do |message_meta|
+    messages = response.messages.map do |message_meta|
       message = service.get_user_message(
         'me',
         message_meta.id,
@@ -71,13 +84,34 @@ class DashboardController < ApplicationController
         metadata_headers: %w[Subject From Date]
       )
       headers = message.payload&.headers || []
+      received_header = extract_header(headers, 'Date')
+      received_time = parse_received_at(received_header)
       {
         id: message.id,
+        history_id: message.history_id,
         subject: extract_header(headers, 'Subject'),
         from: extract_header(headers, 'From'),
-        received_at: extract_header(headers, 'Date'),
+        received_at: received_header,
+        received_at_iso: received_time&.iso8601,
         snippet: message.snippet
       }
+    end
+
+    latest_history_id = messages.filter_map { |email| email[:history_id]&.to_i }.max
+
+    unless latest_history_id
+      profile = service.get_user_profile('me')
+      latest_history_id = profile&.history_id&.to_i
+    end
+
+    if token && latest_history_id
+      token.update(history_id: latest_history_id.to_s)
+    end
+
+    messages.map do |email|
+      email.except(:history_id).tap do |data|
+        data[:received_at_iso] = email[:received_at_iso]
+      end
     end
   end
 
@@ -85,5 +119,27 @@ class DashboardController < ApplicationController
     token = Token.first
     version = token&.updated_at&.to_i || 0
     "dashboard/latest_emails/#{version}"
+  end
+
+  def new_messages_since_last_check?(service, token)
+    return true if token.nil? || token.history_id.blank?
+
+    response = service.list_user_histories(
+      'me',
+      start_history_id: token.history_id,
+      history_types: ['messageAdded'],
+      max_results: 1
+    )
+    response.history.present?
+  rescue Google::Apis::ClientError => e
+    return true if e.status_code == 404
+    raise
+  end
+
+  def parse_received_at(header_value)
+    return nil if header_value.blank?
+    Time.parse(header_value)
+  rescue ArgumentError
+    nil
   end
 end

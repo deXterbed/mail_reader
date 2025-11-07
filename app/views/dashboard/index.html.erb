@@ -20,7 +20,14 @@
           </div>
           <div class="email-meta">
             <span><strong>From:</strong> <%= email[:from] %></span>
-            <span><strong>Received:</strong> <%= email[:received_at] %></span>
+            <span>
+              <strong>Received:</strong>
+              <%= content_tag :span, email[:received_at], data: {
+                    controller: 'localized-date',
+                    localized_date_iso_value: email[:received_at_iso],
+                    localized_date_fallback_value: email[:received_at]
+                  } %>
+            </span>
           </div>
           <p class="email-snippet"><%= email[:snippet] %></p>
         </li>
