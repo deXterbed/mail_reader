@@ -16,6 +16,17 @@
   margin-bottom: 2.5rem;
 }
 
+.button-inline-form {
+  margin: 0;
+}
+
+.button-inline-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 .dashboard-header-info {
   display: flex;
   flex-direction: column;

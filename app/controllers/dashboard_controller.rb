@@ -15,15 +15,31 @@ class DashboardController < ApplicationController
     if params[:refresh] == 'true' || cached_emails.nil?
       @emails = fetch_latest_emails(service, token)
       Rails.cache.write(cache_key, @emails)
-      flash.now[:notice] = 'Inbox refreshed.' if params[:refresh] == 'true'
+      @refresh_message = 'Inbox refreshed.' if params[:refresh] == 'true'
     else
       @emails = cached_emails
+    end
+
+    respond_to do |format|
+      format.html
+      format.turbo_stream do
+        render partial: 'dashboard/emails_list', locals: { emails: @emails, refresh_message: @refresh_message, error_message: nil }
+      end
     end
   rescue Google::Apis::AuthorizationError
     redirect_to login_path, alert: 'Your session has expired. Please sign in again.'
   rescue Google::Apis::ClientError => e
     @emails = []
-    flash.now[:alert] = "Unable to load emails: #{e.message}"
+    @error_message = "Unable to load emails: #{e.message}"
+    respond_to do |format|
+      format.html do
+        flash.now[:alert] = @error_message
+        render :index
+      end
+      format.turbo_stream do
+        render partial: 'dashboard/emails_list', locals: { emails: [], refresh_message: nil, error_message: @error_message }
+      end
+    end
   end
 
   def show

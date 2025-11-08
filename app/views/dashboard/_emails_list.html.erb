@@ -1,0 +1,44 @@
+<% if defined?(error_message) && error_message.present? %>
+  <div class="flash flash-alert"><%= error_message %></div>
+<% elsif defined?(refresh_message) && refresh_message.present? %>
+  <div class="flash flash-notice"><%= refresh_message %></div>
+<% end %>
+
+<% if emails.present? %>
+  <h2>Latest Emails</h2>
+  <ul class="email-list">
+    <% emails.each do |email| %>
+      <li class="email-card">
+        <div class="email-meta">
+          <strong>Subject:</strong>
+          <%= link_to email[:subject],
+            email_path(email[:id]),
+            class: 'email-link',
+            data: { turbo_frame: '_top' } %>
+        </div>
+        <div class="email-meta">
+          <span><strong>From:</strong> <%= email[:from] %></span>
+          <span>
+            <strong>Received:</strong>
+            <%= content_tag :span, email[:received_at], data: {
+                  controller: 'localized-date',
+                  localized_date_iso_value: email[:received_at_iso],
+                  localized_date_fallback_value: email[:received_at]
+                } %>
+          </span>
+        </div>
+        <div class="email-snippet">
+          <p><%= email[:snippet] %></p>
+          <%= link_to 'View details',
+            email_path(email[:id]),
+            class: 'email-link email-link-inline',
+            data: { turbo_frame: '_top' } %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <div class="empty-state">
+    <p>No emails to display yet.</p>
+  </div>
+<% end %>
