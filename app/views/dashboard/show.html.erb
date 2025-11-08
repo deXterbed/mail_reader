@@ -1,0 +1,49 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">Email Details</h1>
+    <%= link_to 'Back to dashboard', dashboard_path, class: 'button button-secondary' %>
+  </div>
+
+  <% if @email.present? %>
+    <div class="email-detail-card">
+      <div class="email-meta">
+        <strong>Subject:</strong> <%= @email[:subject] %>
+      </div>
+      <div class="email-meta">
+        <span><strong>From:</strong> <%= @email[:from] %></span>
+        <span>
+          <strong>Received:</strong>
+          <%= content_tag :span, @email[:received_at], data: {
+                controller: 'localized-date',
+                localized_date_iso_value: @email[:received_at_iso],
+                localized_date_fallback_value: @email[:received_at]
+              } %>
+        </span>
+      </div>
+      <div class="email-snippet">
+        <strong>Snippet:</strong> <%= @email[:snippet] %>
+      </div>
+    </div>
+
+    <% if @email[:body_html].present? || @email[:body_text].present? %>
+      <div class="email-body">
+        <h2>Body</h2>
+        <% if @email[:body_html].present? %>
+          <div class="email-body-frame-wrapper">
+            <%= tag.iframe '',
+              class: 'email-body-frame',
+              src: @email[:body_html_data_uri] %>
+          </div>
+        <% elsif @email[:body_text].present? %>
+          <div class="email-body-text">
+            <%= simple_format(@email[:body_text]) %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="empty-state">
+      <p>Unable to display this email.</p>
+    </div>
+  <% end %>
+</div>

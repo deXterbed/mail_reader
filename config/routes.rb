@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "dashboard#index"
   get '/dashboard', to: 'dashboard#index', as: :dashboard
+  get '/emails/:id', to: 'dashboard#show', as: :email
 
   get '/auth/:provider/callback', to: 'sessions#create'
   get '/login', to: 'sessions#login'  # Redirect to Google auth

@@ -16,6 +16,12 @@
   margin-bottom: 2.5rem;
 }
 
+.dashboard-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .dashboard-title {
   font-size: 2.25rem;
   font-weight: 700;
@@ -86,6 +92,34 @@
   margin: 0.75rem 0 0;
   color: #364152;
   line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.email-snippet-html,
+.email-snippet-text {
+  font-size: 0.95rem;
+}
+
+.email-snippet-html p,
+.email-snippet-text p {
+  margin: 0 0 0.5rem;
+}
+
+.email-body-frame-wrapper {
+  margin-top: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
+}
+
+.email-body-frame {
+  width: 100%;
+  min-height: 600px;
+  border: 0;
+  background: white;
 }
 
 .empty-state {
